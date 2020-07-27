@@ -39,7 +39,7 @@ def build_generator():
     gen_model = Sequential()
 
     # [-1, 4096]
-    gen_model.add(Dense(input_dim=300, output_dim=4096))
+    gen_model.add(Dense(input_dim=500, output_dim=4096))
     gen_model.add(ReLU())
 
     # [-1, 256*8*8]
@@ -87,9 +87,9 @@ def build_generator():
     gen_model.add(BatchNormalization(momentum=0.9))
     gen_model.add(ReLU())
 
-    # [-1,256,256,1]
+    # [-1,256,256,3]
     #gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(1, (3, 3), padding='same'))
+    gen_model.add(Conv2DTranspose(3, (3, 3), padding='same'))
     gen_model.add(BatchNormalization(momentum=0.9))
     gen_model.add(Activation('tanh'))
     gen_model.summary()
@@ -103,7 +103,7 @@ def build_discriminator():
     dis_model.add(
         Conv2D(8, (3, 3),strides=1,
                padding='same',
-               input_shape=(256, 256, 1))
+               input_shape=(256, 256, 3))
     )
     dis_model.add(LeakyReLU(alpha=0.2))
 
@@ -165,12 +165,7 @@ def load_images(image_paths, image_shape):
     for i, image_path in enumerate(image_paths):
         try:
             print(i)
-            loaded_image = cv2.imread(os.path.join(data_dir, image_path))
-            loaded_image = cv2.resize(loaded_image, (256, 256))
-            loaded_image = cv2.Canny(loaded_image, 50, 240)
-            # loaded_image = cv2.filter2D(loaded_image, -1, kernel_sharpen_3)
-            # loaded_image = cv2.inRange(loaded_image, lowerBound, upperBound)
-            # loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
+            loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
             loaded_image = image.img_to_array(loaded_image)
             loaded_image = np.expand_dims(loaded_image, axis=0)
 
@@ -208,10 +203,9 @@ def load_data(path):
 def load_img_path(dirpath):
     path = []
     #dirs=["meter1","meter2"]
-    ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
-    #ddirs = ["0000", "0100", "0200", "0300", "0400", "0500"]
+    #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
     dirs = ["meter1"]
-    #ddirs = ["0000"]
+    ddirs = ["0000"]
 
     for i, type in enumerate(dirs):
         p = os.path.join(dirpath, type)
@@ -220,6 +214,7 @@ def load_img_path(dirpath):
             images = glob.glob("{}/*.jpg".format(ipath))
             for iidx, img in enumerate(images):
                 path.append(img)
+
     return path
 
 
@@ -270,8 +265,8 @@ if __name__ == '__main__':
     label_dir = "/Users/jihyun/Documents/4-1/외부활동/인턴논문및특허/EMETER/epower.csv"
     epochs = 10000
     batch_size = 3
-    image_shape = (256, 256, 1)
-    z_shape = 300
+    image_shape = (256, 256, 3)
+    z_shape = 500
     dis_learning_rate = 0.0002
     gen_learning_rate = 0.0002
     dis_momentum = 0.5
@@ -330,7 +325,6 @@ if __name__ == '__main__':
             d_loss = (dis_loss_real + dis_loss_fake) / 2
 
             dis_model.trainable = False
-            #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
             z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
             g_loss = adversarial_model.train_on_batch(z_noise, y_real)
 
@@ -343,7 +337,6 @@ if __name__ == '__main__':
         print("Epoch: ",epoch," d_loss:", d_loss," g_loss:", g_loss)
 
         if epoch % 10 == 0 or g_loss<3.0:
-            #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
             z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
             gen_images = gen_model.predict_on_batch(z_noise)
             #print(gen_images[0]*255.0)
