@@ -31,71 +31,102 @@ from keras.layers.pooling import MaxPooling2D
 from keras.optimizers import Adam, SGD
 from keras.preprocessing import image
 from scipy.stats import entropy
+import tensorflow_addons as tfa
 import os
 import glob
 
 
-def build_generator():
-    gen_model = Sequential()
+def build_Unet():
+    input_layer=Input(shape=(256,256,1))
 
-    # [-1, 4096]
-    gen_model.add(Dense(input_dim=300, output_dim=4096))
-    gen_model.add(ReLU())
-    #gen_model.add(Dropout(0.1))
+    #인코더 생성
+    encoder1=Conv2D(128,4,padding="same",strides=2)(input_layer)
+    encoder1=LeakyReLU(alpha=0.2)(encoder1)
 
-    # [-1, 256*8*8]
-    gen_model.add(Dense(256 * 8 * 8))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
+    encoder2=Conv2D(256,4,padding="same",strides=2)(encoder1)
+    encoder2=BatchNormalization()(encoder2)
+    encoder2=LeakyReLU(0.2)(encoder2)
 
-    #[-1, 8, 8, 256]
-    gen_model.add(Reshape((8, 8, 256), input_shape=(256 * 8 * 8,)))
-    gen_model.add(Conv2DTranspose(256, (3, 3), padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
-   # gen_model.add(Dropout(0.4))
+    encoder3 = Conv2D(512, 4, padding="same", strides=2)(encoder2)
+    encoder3 = BatchNormalization()(encoder3)
+    encoder3= LeakyReLU(0.2)(encoder3)
 
-    # [-1,16,16,128]
-    gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(128, (3, 3), padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
-    #gen_model.add(Dropout(0.1))
+    encoder4 = Conv2D(512, 4, padding="same", strides=2)(encoder3)
+    encoder4 = BatchNormalization()(encoder4)
+    encoder4 = LeakyReLU(0.2)(encoder4)
 
-    # [-1,32,32,64]
-    gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(64, (3, 3),padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
-    #gen_model.add(Dropout(0.4))
+    encoder5 = Conv2D(512, 4, padding="same", strides=2)(encoder4)
+    encoder5 = BatchNormalization()(encoder5)
+    encoder5 = LeakyReLU(0.2)(encoder5)
 
-    # [-1,64,64,32]
-    gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(32,(3, 3),  padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
+    encoder6 = Conv2D(512, 4, padding="same", strides=2)(encoder5)
+    encoder6 = BatchNormalization()(encoder6)
+    encoder6 = LeakyReLU(0.2)(encoder6)
 
-    #[-1,128,128,16]
-    gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(16, (3, 3),  padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
-    #gen_model.add(Dropout(0.1))
+    encoder7 = Conv2D(512, 4, padding="same", strides=2)(encoder6)
+    encoder7 = BatchNormalization()(encoder7)
+    encoder7 = LeakyReLU(0.2)(encoder7)
 
-    # [-1,256,256,8]
-    gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(8,(3, 3),  padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(ReLU())
+    encoder8 = Conv2D(512, 4, padding="same", strides=2)(encoder7)
+    encoder8 = BatchNormalization()(encoder8)
+    encoder8 = LeakyReLU(0.2)(encoder8)
 
-    # [-1,256,256,1]
-    #gen_model.add(UpSampling2D(size=(2, 2)))
-    gen_model.add(Conv2DTranspose(1, (3, 3), padding='same'))
-    gen_model.add(BatchNormalization(momentum=0.9))
-    gen_model.add(Activation('tanh'))
-    gen_model.summary()
+    #디코더 생성-상향 표본 추출
+    decoder1=UpSampling2D((2,2))(encoder8)
+    decoder1=Conv2D(512,4,padding="same")(decoder1)
+    decoder1=BatchNormalization()(decoder1)
+    decoder1=Dropout(0.5)(decoder1)
+    decoder1=np.concatenate([decoder1, encoder7])
+    decoder1=Activation("relu")(decoder1)
 
-    return gen_model
+    decoder2 = UpSampling2D((2, 2))(decoder1)
+    decoder2 = Conv2D(1024, 4, padding="same")(decoder2)
+    decoder2 = BatchNormalization()(decoder2)
+    decoder2 = Dropout(0.5)(decoder2)
+    decoder2 = np.concatenate([decoder2, encoder6])
+    decoder2 = Activation("relu")(decoder2)
+
+    decoder3 =  UpSampling2D((2, 2))(decoder2)
+    decoder3 = Conv2D(1024, 4, padding="same")(decoder3)
+    decoder3 = BatchNormalization()(decoder3)
+    decoder3 = Dropout(0.5)(decoder3)
+    decoder3 = np.concatenate([decoder3, encoder5])
+    decoder3 = Activation("relu")(decoder3)
+
+    decoder4 =  UpSampling2D((2, 2))(decoder3)
+    decoder4 = Conv2D(1024, 4, padding="same")(decoder4)
+    decoder4 = BatchNormalization()(decoder4)
+    decoder4 = Dropout(0.5)(decoder4)
+    decoder4 = np.concatenate([decoder4, encoder4])
+    decoder4 = Activation("relu")(decoder4)
+
+    decoder5 =  UpSampling2D((2, 2))(decoder4)
+    decoder5 = Conv2D(1024, 4, padding="same")(decoder5)
+    decoder5 = BatchNormalization()(decoder5)
+    decoder5 = Dropout(0.5)(decoder5)
+    decoder5 = np.concatenate([decoder5, encoder3])
+    decoder5 = Activation("relu")(decoder5)
+
+    decoder6 = UpSampling2D((2, 2))(decoder5)
+    decoder6 = Conv2D(512, 4, padding="same")(decoder6)
+    decoder6 = BatchNormalization()(decoder6)
+    decoder6 = Dropout(0.5)(decoder6)
+    decoder6 = np.concatenate([decoder6, encoder2])
+    decoder6 = Activation("relu")(decoder6)
+
+    decoder7 = UpSampling2D((2, 2))(decoder6)
+    decoder7 = Conv2D(256, 4, padding="same")(decoder7)
+    decoder7 = BatchNormalization()(decoder7)
+    decoder7 = Dropout(0.5)(decoder7)
+    decoder7 = np.concatenate([decoder7, encoder1])
+    decoder7 = Activation("relu")(decoder7)
+
+    decoder8 = UpSampling2D((2, 2))(decoder7)
+    decoder8= Conv2D(1, 4, padding="same")(decoder8)
+    decoder8 = Activation("tanh")(decoder8)
+
+    model=Model(inputs=[input_layer],outputs=[decoder8])
+    return model
 
 
 def build_discriminator():
@@ -154,25 +185,43 @@ def build_adversarial_model(gen_model, dis_model):
     model.add(dis_model)
     return model
 
+def encoder(x,n_f):
+    x=Conv2D(n_f,(3,3),padding="same")(x)
+    x=BatchNormalization()(x)
+    x = MaxPooling2D((2, 2), padding="same")(x)
+    x = Activation("tanh")(x)
+
+    x = Conv2D(n_f, (3, 3), padding="same")(x)
+    x = BatchNormalization()(x)
+    #x = MaxPooling2D((2, 2), padding="same")(x)
+    x = Activation("tanh")(x)
+
+def decoder(x,e,n_f):
+    x=UpSampling2D((2,2))(x)
+    x=np.concatenate(axis=1)([x,e])
+    x=Conv2D(n_f,(3,3),padding="same")(x)
+    x=BatchNormalization()(x)
+    x = Activation("tanh")(x)
+
+    #x = UpSampling2D((2, 2))(x)
+    x = Conv2D(n_f, (3, 3), padding="same")(x)
+    x = BatchNormalization()(x)
+    x = Activation("tanh")(x)
+
 
 def load_images(image_paths, image_shape):
     images = None
 
-    lowerBound = np.array([0, 0, 0])
-    upperBound = np.array([65, 65, 65])
-    kernel_sharpen_3 = np.array(
-        [[-1, -1, -1, -1, -1], [-1, 2, 2, 2, -1], [-1, 2, 8, 2, -1], [-1, 2, 2, 2, -1], [-1, -1, -1, -1, -1]])
-
     for i, image_path in enumerate(image_paths):
         try:
             print(i)
+            #입력 이미지 자체가 흑백 이미지(생성한 가짜 이미지)
             loaded_image = cv2.imread(os.path.join(data_dir, image_path))
-
             loaded_image = cv2.resize(loaded_image, (256, 256))
             #엣지 추출
             #loaded_image = cv2.Canny(loaded_image, 50, 240)
             #흑백 이미지(grayscale)
-            loaded_image=cv2.cvtColor(loaded_image,cv2.COLOR_BGR2GRAY)
+            #loaded_image=cv2.cvtColor(loaded_image,cv2.COLOR_BGR2GRAY)
 
             # loaded_image = cv2.filter2D(loaded_image, -1, kernel_sharpen_3)
             # loaded_image = cv2.inRange(loaded_image, lowerBound, upperBound)
@@ -213,49 +262,11 @@ def load_data(path):
 
 def load_img_path(dirpath):
     path = []
-    #dirs=["meter1","meter2"]
-    ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
-    #ddirs = ["0000", "0100", "0200", "0300", "0400", "0500"]
-    dirs = ["meter1"]
-    #ddirs = ["0000"]
+    images = glob.glob("{}/*.png".format(dirpath))
+    for iidx, img in enumerate(images):
+        path.append(img)
 
-    for i, type in enumerate(dirs):
-        p = os.path.join(dirpath, type)
-        for idx, img_path in enumerate(ddirs):
-            ipath = os.path.join(p, img_path)
-            images = glob.glob("{}/*.jpg".format(ipath))
-            for iidx, img in enumerate(images):
-                path.append(img)
     return path
-
-
-def denormalize(img):
-    img = (img + 1) * 127.5
-    return img.astype(np.uint8)
-
-
-def normalize(img):
-    return (img - 127.5) / 127.5
-
-
-def visualize_rgb(img):
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.imshow(img)
-    ax.axis("off")
-    ax.set_title("Image")
-    plt.show()
-
-
-def save_rgb_img(img, path):
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.imshow((img * 255).astype(np.uint8))
-    ax.axis("off")
-    ax.set_title("Image")
-
-    plt.savefig(path)
-    plt.close()
 
 
 def write_log(writer, name, value, batch_no):
@@ -272,12 +283,10 @@ def write_log(writer, name, value, batch_no):
 
 if __name__ == '__main__':
     # 파라미터 초기화
-    data_dir = "D:\meter_dataset\meter_images_2160"
-    label_dir = "/Users/jihyun/Documents/4-1/외부활동/인턴논문및특허/EMETER/epower.csv"
-    epochs = 300
+    data_dir = "C:\\Users\\ailab5\\PycharmProjects\\GANTest\\venv\\results"
+    epochs = 1000
     batch_size = 3
     image_shape = (256, 256, 1)
-    z_shape = 300
     dis_learning_rate = 0.0001
     gen_learning_rate = 0.0001
     dis_momentum = 0.5
@@ -285,71 +294,33 @@ if __name__ == '__main__':
     dis_nesterov = True
     gen_nesterov = True
 
-    # 신경망 최적화
-    dis_optimizer = Adam(lr=dis_learning_rate, beta_1=0.9)
-    # ad_optimizer = SGD(lr=gen_learning_rate, momentum=gen_momentum, nesterov=gen_nesterov)
-    # dis_optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-    gen_optimizer = Adam(lr=gen_learning_rate, beta_1=0.9)
-
-    # 생성기 + 판별기 신경망 컴파일
-    dis_model = build_discriminator()
-    dis_model.compile(loss='binary_crossentropy', optimizer=dis_optimizer)
-
-    gen_model = build_generator()
-    gen_model.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
-
-    adversarial_model = build_adversarial_model(gen_model, dis_model)
-    adversarial_model.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
-    print("AD")
-
-    imgpath = load_img_path(data_dir)
-
     # data 준비
+    imgpath = load_img_path(data_dir)
     emlist = load_images(imgpath, (image_shape[0], image_shape[1]))
 
     # 라벨 smoothing
     real_labels = np.ones((batch_size, 1), dtype=np.float32) * 0.9
     fake_labels = np.zeros((batch_size, 1), dtype=np.float32) * 0.1
 
-    # writer = tf.summary.create_file_writer('./logs')
+    #U-net 최적기 컴파일
+    gen_optimizer = Adam(lr=gen_learning_rate, beta_1=0.9)
+    gen_model = build_generator()
+    gen_model.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
 
     # 생성기 훈련
     for epoch in range(epochs):
         gen_losses = []
-        dis_losses = []
         number_of_batches = int(len(emlist) / batch_size)
 
         for index in range(number_of_batches):
             images_batch = emlist[index * batch_size:(index + 1) * batch_size]
-
-            #판별기 먼저 학습
             z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
-            generated_images = gen_model.predict_on_batch(z_noise)
-            dis_model.trainable = True
-            #판별기 입력에 인공적 노이즈 추가
-            y_real = np.ones((batch_size,)) * 0.9
-            y_fake = np.zeros((batch_size,)) * 0.1
-            # 판별자 학습할때 입력은 하나의 종류만 넣고 학습, 섞어서 사용 x
-            dis_loss_real = dis_model.train_on_batch(images_batch, y_real)
-            dis_loss_fake = dis_model.train_on_batch(generated_images, y_fake)
+            g_loss = gen_model.train_on_batch(z_noise, y_real)
 
-            d_loss = (dis_loss_real + dis_loss_fake)
-
-
-            dis_model.trainable = False
-            #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
-            z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
-            g_loss = adversarial_model.train_on_batch(z_noise, y_real)
-
-            dis_losses.append(d_loss)
             gen_losses.append(g_loss)
-
-            # write_log(writer, 'g_loss', np.mean(gen_losses), epoch)
-            # write_log(writer, 'd_loss', np.mean(dis_losses), epoch)
 
         print("Epoch: ",epoch," d_loss:", d_loss," g_loss:", g_loss)
 
-        #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
         z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
         gen_images = gen_model.predict_on_batch(z_noise)
         #print(gen_images[0]*255.0)
