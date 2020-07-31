@@ -41,6 +41,7 @@ def build_generator():
     # [-1, 4096]
     gen_model.add(Dense(input_dim=300, output_dim=4096))
     gen_model.add(ReLU())
+    #gen_model.add(Dropout(0.1))
 
     # [-1, 256*8*8]
     gen_model.add(Dense(256 * 8 * 8))
@@ -59,7 +60,7 @@ def build_generator():
     gen_model.add(Conv2DTranspose(128, (3, 3), padding='same'))
     gen_model.add(BatchNormalization(momentum=0.9))
     gen_model.add(ReLU())
-    gen_model.add(Dropout(0.1))
+    #gen_model.add(Dropout(0.1))
 
     # [-1,32,32,64]
     gen_model.add(UpSampling2D(size=(2, 2)))
@@ -166,8 +167,13 @@ def load_images(image_paths, image_shape):
         try:
             print(i)
             loaded_image = cv2.imread(os.path.join(data_dir, image_path))
+
             loaded_image = cv2.resize(loaded_image, (256, 256))
-            loaded_image = cv2.Canny(loaded_image, 50, 240)
+            #엣지 추출
+            #loaded_image = cv2.Canny(loaded_image, 50, 240)
+            #흑백 이미지(grayscale)
+            loaded_image=cv2.cvtColor(loaded_image,cv2.COLOR_BGR2GRAY)
+
             # loaded_image = cv2.filter2D(loaded_image, -1, kernel_sharpen_3)
             # loaded_image = cv2.inRange(loaded_image, lowerBound, upperBound)
             # loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
@@ -207,6 +213,7 @@ def load_data(path):
 
 def load_img_path(dirpath):
     path = []
+<<<<<<< HEAD:dcgan_edge256256_v2.py
     #dirs=["meter1","meter2"]
     #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
     #ddirs = ["0000", "0100", "0200", "0300", "0400", "0500"]
@@ -221,6 +228,29 @@ def load_img_path(dirpath):
             images = glob.glob("{}/*.jpg".format(ipath))
             for iidx, img in enumerate(images):
                 path.append(img)
+=======
+    dirs=["meter1","meter2"]
+    #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
+    ddir1 = ["0000", "0100", "0200", "0300", "0400", "0500"]
+    ddir2 = ["0500","0600","0700","0800","0900","1000"]
+    #dirs = ["meter1"]
+    #ddirs = ["0000"]
+
+    for i, type in enumerate(dirs):
+        p = os.path.join(dirpath, type)
+        if i==0:
+            for idx, img_path in enumerate(ddir1):
+                ipath = os.path.join(p, img_path)
+                images = glob.glob("{}/*.jpg".format(ipath))
+                for iidx, img in enumerate(images):
+                    path.append(img)
+        else:
+            for idx, img_path in enumerate(ddir2):
+                ipath = os.path.join(p, img_path)
+                images = glob.glob("{}/*.jpg".format(ipath))
+                for iidx, img in enumerate(images):
+                    path.append(img)
+>>>>>>> 79093df88a3d120082e715dc5f4d5011768ad0b4:dcgan_edge256256.py
     return path
 
 
@@ -267,14 +297,20 @@ def write_log(writer, name, value, batch_no):
 
 if __name__ == '__main__':
     # 파라미터 초기화
+<<<<<<< HEAD:dcgan_edge256256_v2.py
     data_dir = "C:\\Users\\jihyun\\PycharmProjects\\GANTest\\venv\\repo\\Generate_ElectricMeter\\meter_dataset\\meter_images_2160"
 
     epochs = 10000
+=======
+    data_dir = "D:\meter_dataset\meter_images_2160"
+    label_dir = "/Users/jihyun/Documents/4-1/외부활동/인턴논문및특허/EMETER/epower.csv"
+    epochs = 300
+>>>>>>> 79093df88a3d120082e715dc5f4d5011768ad0b4:dcgan_edge256256.py
     batch_size = 3
     image_shape = (256, 256, 1)
     z_shape = 300
-    dis_learning_rate = 0.0002
-    gen_learning_rate = 0.0002
+    dis_learning_rate = 0.0001
+    gen_learning_rate = 0.0001
     dis_momentum = 0.5
     gen_momentum = 0.5
     dis_nesterov = True
@@ -328,7 +364,8 @@ if __name__ == '__main__':
             dis_loss_real = dis_model.train_on_batch(images_batch, y_real)
             dis_loss_fake = dis_model.train_on_batch(generated_images, y_fake)
 
-            d_loss = (dis_loss_real + dis_loss_fake) / 2
+            d_loss = (dis_loss_real + dis_loss_fake)
+
 
             dis_model.trainable = False
             #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
@@ -343,12 +380,11 @@ if __name__ == '__main__':
 
         print("Epoch: ",epoch," d_loss:", d_loss," g_loss:", g_loss)
 
-        if epoch % 10 == 0 or g_loss<3.0:
-            #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
-            z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
-            gen_images = gen_model.predict_on_batch(z_noise)
-            #print(gen_images[0]*255.0)
-            cv2.imwrite("C:/Users/ailab5/PycharmProjects/GANTest/venv/results/{}.png".format(epoch), gen_images[0]*255.)
+        #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
+        z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
+        gen_images = gen_model.predict_on_batch(z_noise)
+        #print(gen_images[0]*255.0)
+        cv2.imwrite("C:/Users/ailab5/PycharmProjects/GANTest/venv/results/{}.png".format(epoch), gen_images[0]*255.)
 
     # 생성기, 판별기 가중치 저장
     try:
