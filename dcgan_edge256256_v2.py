@@ -10,7 +10,7 @@ import csv
 import cv2
 
 import keras.backend as K
-import matplotlib.gridspec as gridspec
+
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
@@ -208,13 +208,14 @@ def load_data(path):
 def load_img_path(dirpath):
     path = []
     #dirs=["meter1","meter2"]
-    ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
+    #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
     #ddirs = ["0000", "0100", "0200", "0300", "0400", "0500"]
     dirs = ["meter1"]
-    #ddirs = ["0000"]
+    ddirs = ["0000"]
 
     for i, type in enumerate(dirs):
         p = os.path.join(dirpath, type)
+        print(p)
         for idx, img_path in enumerate(ddirs):
             ipath = os.path.join(p, img_path)
             images = glob.glob("{}/*.jpg".format(ipath))
@@ -266,8 +267,8 @@ def write_log(writer, name, value, batch_no):
 
 if __name__ == '__main__':
     # 파라미터 초기화
-    data_dir = "D:\meter_dataset\meter_images_2160"
-    label_dir = "/Users/jihyun/Documents/4-1/외부활동/인턴논문및특허/EMETER/epower.csv"
+    data_dir = "C:\\Users\\jihyun\\PycharmProjects\\GANTest\\venv\\repo\\Generate_ElectricMeter\\meter_dataset\\meter_images_2160"
+
     epochs = 10000
     batch_size = 3
     image_shape = (256, 256, 1)
