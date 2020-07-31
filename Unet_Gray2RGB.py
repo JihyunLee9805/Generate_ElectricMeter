@@ -215,13 +215,13 @@ def load_images(image_paths, image_shape):
     for i, image_path in enumerate(image_paths):
         try:
             print(i)
-            #입력 이미지 자체가 흑백 이미지(생성한 가짜 이미지)
+
             loaded_image = cv2.imread(os.path.join(data_dir, image_path))
             loaded_image = cv2.resize(loaded_image, (256, 256))
             #엣지 추출
             #loaded_image = cv2.Canny(loaded_image, 50, 240)
             #흑백 이미지(grayscale)
-            #loaded_image=cv2.cvtColor(loaded_image,cv2.COLOR_BGR2GRAY)
+            loaded_image=cv2.cvtColor(loaded_image,cv2.COLOR_BGR2GRAY)
 
             # loaded_image = cv2.filter2D(loaded_image, -1, kernel_sharpen_3)
             # loaded_image = cv2.inRange(loaded_image, lowerBound, upperBound)

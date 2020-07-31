@@ -213,19 +213,27 @@ def load_data(path):
 
 def load_img_path(dirpath):
     path = []
-    #dirs=["meter1","meter2"]
-    ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
-    #ddirs = ["0000", "0100", "0200", "0300", "0400", "0500"]
-    dirs = ["meter1"]
+    dirs=["meter1","meter2"]
+    #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
+    ddir1 = ["0000", "0100", "0200", "0300", "0400", "0500"]
+    ddir2 = ["0500","0600","0700","0800","0900","1000"]
+    #dirs = ["meter1"]
     #ddirs = ["0000"]
 
     for i, type in enumerate(dirs):
         p = os.path.join(dirpath, type)
-        for idx, img_path in enumerate(ddirs):
-            ipath = os.path.join(p, img_path)
-            images = glob.glob("{}/*.jpg".format(ipath))
-            for iidx, img in enumerate(images):
-                path.append(img)
+        if i==0:
+            for idx, img_path in enumerate(ddir1):
+                ipath = os.path.join(p, img_path)
+                images = glob.glob("{}/*.jpg".format(ipath))
+                for iidx, img in enumerate(images):
+                    path.append(img)
+        else:
+            for idx, img_path in enumerate(ddir2):
+                ipath = os.path.join(p, img_path)
+                images = glob.glob("{}/*.jpg".format(ipath))
+                for iidx, img in enumerate(images):
+                    path.append(img)
     return path
 
 
