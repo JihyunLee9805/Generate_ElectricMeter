@@ -213,14 +213,14 @@ def load_data(path):
 
 def load_img_path(dirpath):
     path = []
-    dirs=["meter1","meter2"]
-    #ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
-    ddir1 = ["0000", "0100", "0200", "0300", "0400", "0500"]
-    ddir2 = ["0500","0600","0700","0800","0900","1000"]
-    #dirs = ["meter1"]
-    #ddirs = ["0000"]
+    #dirs=["meter1","meter2"]
+    ddirs=["0000","0100","0200","0300","0400","0500","0600","0700","0800","0900","1000"]
+    #ddir1 = ["0000", "0100", "0200", "0300", "0400", "0500"]
+    #ddir2 = ["0500","0600","0700","0800","0900","1000"]
+    dirs = ["meter2"]
 
-    for i, type in enumerate(dirs):
+
+    """for i, type in enumerate(dirs):
         p = os.path.join(dirpath, type)
         if i==0:
             for idx, img_path in enumerate(ddir1):
@@ -233,7 +233,16 @@ def load_img_path(dirpath):
                 ipath = os.path.join(p, img_path)
                 images = glob.glob("{}/*.jpg".format(ipath))
                 for iidx, img in enumerate(images):
-                    path.append(img)
+                    path.append(img)"""
+
+    for i,type in enumerate(dirs):
+        p=os.path.join(dirpath,type)
+        for idx, img_path in enumerate(ddirs):
+            ipath=os.path.join(p,img_path)
+            images=glob.glob("{}/*.jpg".format(ipath))
+            for iidx, img in enumerate(images):
+                path.append(img)
+
     return path
 
 
@@ -311,8 +320,6 @@ if __name__ == '__main__':
     print("AD")
 
     imgpath = load_img_path(data_dir)
-
-    # data 준비
     emlist = load_images(imgpath, (image_shape[0], image_shape[1]))
 
     # 라벨 smoothing
@@ -343,7 +350,6 @@ if __name__ == '__main__':
 
             d_loss = (dis_loss_real + dis_loss_fake)
 
-
             dis_model.trainable = False
             #z_noise = np.random.randint(0, high=0 + 1, size=(batch_size, z_shape))
             z_noise = np.random.normal(-1., 1., size=(batch_size, z_shape))
@@ -352,7 +358,7 @@ if __name__ == '__main__':
             dis_losses.append(d_loss)
             gen_losses.append(g_loss)
 
-            # write_log(writer, 'g_loss', np.mean(gen_losses), epoch)
+            # write_log(writer, 'g_loss', np.mean(gen_losses), epoch)lamps
             # write_log(writer, 'd_loss', np.mean(dis_losses), epoch)
 
         print("Epoch: ",epoch," d_loss:", d_loss," g_loss:", g_loss)
@@ -366,7 +372,7 @@ if __name__ == '__main__':
     # 생성기, 판별기 가중치 저장
     try:
         gen_model.save("generator_model.h5")
-        dis_model.save("generator_model.h5")
+        dis_model.save("discriminator_model.h5")
 
     except Exception as e:
         print("Eror:", e)
